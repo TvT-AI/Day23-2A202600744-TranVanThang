@@ -1,0 +1,68 @@
+## SLO: 99.5% of requests succeed (status="ok") within 30 days.
+## Error budget = 0.5% = 3.6 hours/month.
+##
+## Multi-window multi-burn-rate (Google SRE Workbook):
+##   Fast burn:  5m AND 1h windows, both > 14.4× normal rate  (page within ~2 hours of burning 30d budget)
+##   Slow burn:  30m AND 6h windows, both > 6× normal rate    (page on sustained-but-quiet degradation)
+##
+## SLI = sum(rate(success)) / sum(rate(total))   →  failures = 1 - SLI
+## Burn rate = failures_observed / 0.005          →  1.0 means exactly on track
+
+groups:
+  - name: slo-burn-rate
+    interval: 30s
+    rules:
+      # Recording rules — pre-compute the failure rate at multiple windows
+      - record: inference:fail_ratio:rate5m
+        expr: |
+          sum(rate(inference_requests_total{status="error"}[5m]))
+          /
+          sum(rate(inference_requests_total[5m]))
+
+      - record: inference:fail_ratio:rate30m
+        expr: |
+          sum(rate(inference_requests_total{status="error"}[30m]))
+          /
+          sum(rate(inference_requests_total[30m]))
+
+      - record: inference:fail_ratio:rate1h
+        expr: |
+          sum(rate(inference_requests_total{status="error"}[1h]))
+          /
+          sum(rate(inference_requests_total[1h]))
+
+      - record: inference:fail_ratio:rate6h
+        expr: |
+          sum(rate(inference_requests_total{status="error"}[6h]))
+          /
+          sum(rate(inference_requests_total[6h]))
+
+      # Fast burn — fires within minutes if we're hammering the budget
+      - alert: SLOFastBurn
+        expr: |
+          inference:fail_ratio:rate5m  > (14.4 * 0.005)
+          and
+          inference:fail_ratio:rate1h  > (14.4 * 0.005)
+        for: 2m
+        labels:
+          severity: critical
+          service: inference-api
+        annotations:
+          summary: "SLO fast burn: error budget consumed > 14.4× normal"
+          description: "5m and 1h burn rates both exceed 14.4×. At this pace the 30-day error budget is gone in ~2 days."
+          runbook_url: "https://wiki.example/runbooks/slo-fast-burn"
+
+      # Slow burn — sustained low-grade degradation
+      - alert: SLOSlowBurn
+        expr: |
+          inference:fail_ratio:rate30m > (6 * 0.005)
+          and
+          inference:fail_ratio:rate6h  > (6 * 0.005)
+        for: 15m
+        labels:
+          severity: warning
+          service: inference-api
+        annotations:
+          summary: "SLO slow burn: error budget consumed > 6× normal"
+          description: "30m and 6h burn rates both exceed 6×. Investigate before it escalates."
+          runbook_url: "https://wiki.example/runbooks/slo-slow-burn"
