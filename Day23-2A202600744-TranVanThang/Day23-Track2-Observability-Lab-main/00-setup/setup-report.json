@@ -1,0 +1,25 @@
+{
+  "docker": {
+    "ok": false,
+    "version": "docker daemon not reachable: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified."
+  },
+  "compose_v2": {
+    "ok": true,
+    "version": "5.1.4"
+  },
+  "ram_gb_available": 0.0,
+  "ram_ok": false,
+  "required_ports": [
+    8000,
+    9090,
+    9093,
+    3000,
+    3100,
+    16686,
+    4317,
+    4318,
+    8888
+  ],
+  "bound_ports": [],
+  "all_ports_free": true
+}

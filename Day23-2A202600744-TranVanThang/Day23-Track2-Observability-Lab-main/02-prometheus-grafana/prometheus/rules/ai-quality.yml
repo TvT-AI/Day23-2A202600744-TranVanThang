@@ -1,0 +1,40 @@
+## AI-specific alert rules — covers latency, service health, and quality drift.
+
+groups:
+  - name: ai-quality
+    interval: 30s
+    rules:
+      - alert: HighInferenceLatency
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum(rate(inference_latency_seconds_bucket[5m])) by (le, model)
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: inference-api
+        annotations:
+          summary: "P99 latency > 2s on {{ $labels.model }}"
+          description: "P99 latency has been > 2s for 5 minutes."
+          runbook_url: "https://wiki.example/runbooks/high-inference-latency"
+
+      - alert: ServiceDown
+        expr: up{job="inference-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: inference-api
+        annotations:
+          summary: "inference-api is down"
+          description: "Prometheus has been unable to scrape inference-api for 1 minute."
+
+      - alert: InferenceQualityDrop
+        expr: avg(inference_quality_score) by (model) < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          service: inference-api
+        annotations:
+          summary: "Eval-as-metric quality < 0.7 on {{ $labels.model }}"
+          description: "Sustained drop in production eval score — investigate drift or model regression."

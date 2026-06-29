@@ -1,0 +1,46 @@
+{
+  "title": "Cost & Tokens (Day 23)",
+  "uid": "day23-cost-tokens",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "type": "timeseries", "title": "Token Throughput (in / out)",
+      "id": 1, "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "sum by (direction) (rate(inference_tokens_total[1m]))",
+        "legendFormat": "{{direction}}", "refId": "A"
+      }],
+      "fieldConfig": {"defaults": {"unit": "ops"}}
+    },
+    {
+      "type": "stat", "title": "Estimated $/hr (input @ $0.5/M, output @ $2.0/M)",
+      "id": 2, "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "3600 * (sum(rate(inference_tokens_total{direction=\"input\"}[5m])) * 0.0000005 + sum(rate(inference_tokens_total{direction=\"output\"}[5m])) * 0.000002)",
+        "refId": "A"
+      }],
+      "fieldConfig": {"defaults": {"unit": "currencyUSD",
+        "thresholds": {"mode": "absolute", "steps": [
+          {"color": "green", "value": null},
+          {"color": "yellow", "value": 5},
+          {"color": "red", "value": 20}
+        ]}
+      }}
+    },
+    {
+      "type": "timeseries", "title": "Eval Quality Score by model",
+      "id": 3, "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "avg by (model) (inference_quality_score)",
+        "legendFormat": "{{model}}", "refId": "A"
+      }],
+      "fieldConfig": {"defaults": {"unit": "short", "min": 0, "max": 1}}
+    }
+  ]
+}

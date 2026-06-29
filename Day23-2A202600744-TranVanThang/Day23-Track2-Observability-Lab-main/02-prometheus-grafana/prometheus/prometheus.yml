@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: aicb-day23-lab
+    env: lab
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'inference-api'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: /metrics
+
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8888']
+
+  # Day 19 vector-store integration (optional, see §05)
+  # Uncomment + set DAY19_QDRANT_URL in .env
+  # - job_name: 'day19-qdrant'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:6333']
+  #   metrics_path: /metrics
+
+  # Day 20 model-serving integration (optional, see §05)
+  # - job_name: 'day20-llamacpp'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:8080']
+  #   metrics_path: /metrics
