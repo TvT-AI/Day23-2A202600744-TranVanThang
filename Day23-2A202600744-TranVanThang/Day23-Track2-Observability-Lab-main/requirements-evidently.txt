@@ -1,7 +1,0 @@
-# OPTIONAL — Evidently HTML drift report (rubric #17). Python 3.12 only.
-# Evidently's legacy Report/DataDriftPreset API (used by drift_detect.py) lives in
-# the 0.4.x line, which caps numpy<2.1; numpy 2.0.2 has wheels only up to Py3.12.
-#   python3.12 -m venv .venv-evidently && . .venv-evidently/bin/activate
-#   pip install -r requirements.txt -r requirements-evidently.txt
-evidently==0.4.40
-numpy==2.0.2
